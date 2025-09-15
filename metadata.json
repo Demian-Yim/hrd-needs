@@ -1,0 +1,5 @@
+{
+  "name": "HRD 니즈 진단 시스템",
+  "description": "기업 교육 니즈를 체계적으로 진단하고 ADDIE 모델 기반의 맞춤 교육 제안서를 생성하는 다단계 설문 시스템입니다.",
+  "requestFramePermissions": []
+}
