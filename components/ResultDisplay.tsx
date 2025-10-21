@@ -34,31 +34,48 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onRestart 
     setIsPrinting(true);
     try {
       const element = printRef.current;
+      
+      // Temporarily add padding for better spacing in the PDF
+      const originalPadding = element.style.padding;
+      element.style.padding = '20px';
+
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2, // Higher scale for better quality
         useCORS: true,
         backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+        // Set window size to content size to get the full content without scrollbars
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
       
+      // Revert styles after capture
+      element.style.padding = originalPadding;
+
       const imgData = canvas.toDataURL('image/png');
       
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const imgProps = pdf.getImageProperties(imgData);
-      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      let heightLeft = imgHeight;
-      let position = 0;
+      const margin = 15; // 15mm margin
+      const contentWidth = pdfWidth - (margin * 2);
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      // Calculate the image height in the PDF to maintain aspect ratio
+      const contentHeight = (imgProps.height * contentWidth) / imgProps.width;
+      
+      const usablePageHeight = pdfHeight - (margin * 2);
+      const numPages = Math.ceil(contentHeight / usablePageHeight);
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      for (let i = 0; i < numPages; i++) {
+          if (i > 0) {
+              pdf.addPage();
+          }
+          // Calculate the y-offset to show the correct slice of the image
+          const imageYPosition = -(i * usablePageHeight);
+          
+          // Add the image slice to the page, positioned within the margins
+          pdf.addImage(imgData, 'PNG', margin, margin + imageYPosition, contentWidth, contentHeight);
       }
 
       pdf.save('HRD_진단_결과_보고서.pdf');

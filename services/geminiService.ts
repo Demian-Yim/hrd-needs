@@ -1,6 +1,9 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { SurveyData, DiagnosisResult } from '../types';
+
+if (!process.env.API_KEY) {
+  throw new Error("Google Gemini API 키가 설정되지 않았습니다. Netlify 환경 변수에서 API_KEY를 설정해주세요.");
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
